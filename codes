@@ -1,0 +1,535 @@
+#1 PRE PROCESSING
+
+# %%
+import pandas as pd
+from sklearn.datasets import load_iris
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler,MinMaxScaler,OneHotEncoder
+
+# %%
+iris = load_iris()
+data = pd.DataFrame(data=iris.data,columns=iris.feature_names)
+data['target'] = iris.target
+
+# %%
+data.loc[10:15,'sepal length (cm)'] = pd.NA
+data.loc[40:45,'petal width (cm)'] = pd.NA
+
+data[10:15]
+
+# %%
+#imputation: Handling missing values
+imputer = SimpleImputer(strategy='mean')
+data_imputed = imputer.fit_transform(data.iloc[:, :-1])
+data_imputed = pd.DataFrame(data_imputed,columns=data.columns[:-1])
+
+
+# %%
+#standardization:Transforming the data to have a mean of 0 and a standard deviation of 1.
+# Standardization
+scaler = StandardScaler()
+data_standardized = scaler.fit_transform(data_imputed)
+data_standardized = pd.DataFrame(data_standardized, columns=data.columns[:-1])
+data_standardized
+
+# %%
+#Normalization: Scaling the data to a range of 0 to 1.
+# Normalization
+min_max_scaler = MinMaxScaler()
+data_normalized = min_max_scaler.fit_transform(data_imputed)
+data_normalized = pd.DataFrame(data_normalized, columns=data.columns[:-1])
+data_normalized
+
+# %%
+#Encoding: Converting categorical variables into a numerical format.
+encoder = OneHotEncoder(sparse=False)
+target_encoded = encoder.fit_transform(data['target'].values.reshape(-1, 1))
+target_encoded
+
+
+##2  GRADIENT DESCENT
+
+# %%
+import numpy as np
+import pandas as pd
+
+# %%
+dataset = pd.read_csv('headbrain.csv')
+dataset.head()
+x_history = []
+loss_history = []
+
+# %%
+def gradient_descent(x,y):
+    m_curr = b_curr = 0
+    iteraions = 1000
+    n = len(X)
+    learning_rate = 0.08
+
+    for i in range(iteraions):
+        y_predicted = m_curr*x+ b_curr
+        cost = (1/n)*sum([val**2 for val in (y-y_predicted)])
+        md = -(2/n)*sum(x*(y-y_predicted))
+        bd = -(2/n)*sum(y-y_predicted)
+
+        m_curr = m_curr-learning_rate*md
+        b_curr = b_curr-learning_rate*bd
+
+        print ("m {}, b {}, cost {} iteration {}".format(m_curr,b_curr,cost, i))
+
+# %%
+x = dataset['Head Size(cm^3)']
+y = dataset['Brain Weight(grams)']
+X = np.array(x)
+Y = np.array(y)
+
+X,Y
+gradient_descent(X,Y)
+
+
+##3 LINEAR REGRESSION
+
+# %%
+import pandas as pd
+import numpy as np
+import math 
+import operator
+import matplotlib.pyplot as plt
+
+# %%
+data = pd.read_csv('headbrain.csv')
+data.head()
+
+# %%
+X = data['Head Size(cm^3)'].values
+Y = data['Brain Weight(grams)'].values
+
+mean_x = np.mean(X)
+mean_y = np.mean(Y)
+
+
+# %%
+m = len(X)
+numer = 0
+denom = 0
+
+for i in range(m):
+    numer+= (X[i]-mean_x)*(Y[i]-mean_y)
+    denom+= (X[i]-mean_x)**2
+
+m = numer/denom
+c = mean_y - (m*mean_x)
+
+
+
+# %%
+max_x = np.max(X)+100
+min_x = np.min(X)-100
+
+x = np.linspace(min_x,max_x,100)
+y = m*x+c
+
+plt.plot(x,y,color='green',label='regression line')
+plt.scatter(X,Y,color='red')
+
+
+## 4 MULTIPLE REGRESSION
+
+# %%
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# %%
+dataset = pd.read_csv('Advertising.csv')
+dataset.head()
+
+# %%
+# Equation: Sales = β0 + (β1 * TV) + (β2 * Radio) + (β3 * Newspaper) + e
+
+# %%
+x = dataset[['TV','Radio','Newspaper']]
+y = dataset['Sales']
+
+# %%
+from sklearn.model_selection import train_test_split
+
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size = 0.3, random_state = 100)
+
+# %%
+from sklearn.linear_model import LinearRegression
+
+# %%
+mlr = LinearRegression()
+mlr.fit(x_train,y_train)
+
+# %%
+mlr.intercept_
+
+# %%
+mlr.coef_
+
+# %%
+y_pred_mlr= mlr.predict(x_test)
+y_pred_mlr
+
+
+## 5 LOGISTIC REGRESSION
+
+# %%
+import numpy as np
+import pandas as pd
+
+# %%
+class LogisticRegression:
+    
+    def __init__(self,learning_rate=0.01,num_iterations=1000):
+        self.learning_rate = learning_rate
+        self.num_iterations = num_iterations
+        self.Weights = None
+        self.Bias = None
+
+    def Sigmoid(self,z):
+        return 1/(1+np.exp(-z))
+    
+    def fit(self,X,Y):
+        num_samples,num_features = X.shape
+        self.Weights = np.zeros(num_features)
+        self.Bias = 0
+
+        for _ in range(self.num_iterations):
+            linear_model = np.dot(X,self.Weights)+self.Bias
+            predictions = self.Sigmoid(linear_model)
+
+            dw = 1/(num_samples)*np.dot(X.T,(predictions-Y))
+            db = 1/(num_samples)*np.sum(predictions-Y)
+
+            self.Weights -= self.learning_rate*dw
+            self.Bias -= self.learning_rate*db
+
+    def predict(self,T):
+        linear_model = np.dot(T,self.Weights)+self.Bias
+        predictions = self.Sigmoid(linear_model)
+        predicted_labels = [1 if p>=0.5 else 0 for p in predictions]
+        return predicted_labels
+            
+
+
+# %%
+# Sample data
+X = np.array([[2.5, 1.5], [3.0, 1.0], [4.0, 3.0], [1.0, 4.0], [2.0, 2.0]])
+Y = np.array([1, 1, 0, 0, 1])
+
+T = np.array([[2, 1], [3.0, 1.5], [4.0, 3.0], [1.0, 4.0], [2.5, 2.0]])
+
+
+model = LogisticRegression(learning_rate=0.01, num_iterations=1000)
+model.fit(X, Y)
+
+# %%
+y_pred = model.predict(T)
+# print("Learned Weights:", model.Weights)
+# print("Learned Bias:", model.Bias)
+print("Predicted Labels:", y_pred)
+
+
+## 6 SVM
+
+# %%
+pip install sklearn
+
+# %%
+import pandas as pd
+from sklearn.datasets import load_iris
+iris = load_iris()
+iris
+
+# %%
+df = pd.DataFrame(iris.data,columns=iris.feature_names)
+df.head()
+
+# %%
+df['target'] = iris.target
+df['flower_name'] =df.target.apply(lambda x: iris.target_names[x])
+
+
+# %%
+from sklearn.model_selection import train_test_split
+
+# %%
+X = df.drop(['target','flower_name'], axis='columns')
+y = df.target
+X,y
+
+# %%
+X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.2)
+X_train,X_test,y_train,y_test
+
+# %%
+len(y_train)
+
+# %%
+from sklearn.svm import SVC
+model = SVC()
+
+# %%
+model.fit(X_train, y_train)
+
+
+# %%
+model.score(X_test, y_test)
+
+
+# %%
+x=model.predict([[4.8,3.0,7.5,0.3]])
+specie = iris.target_names[x]
+specie[0]
+
+
+
+## 7 DECISION TREE
+
+import numpy as np # linear algebra
+import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import LabelEncoder
+%matplotlib inline
+
+data = 'car_evaluation.csv'
+df = pd.read_csv(data, header=None)
+
+# Rename the column
+col_names = ['buying', 'meant', 'doors', 'persons', 'lug_boot', 'safety', 'class']
+
+df.columns = col_names
+df.head()
+df.info()
+
+for col in col_names:
+    print(df[col].value_counts())
+
+df['class'].value_counts()
+
+df.isnull().sum()
+
+X = df.drop(['class'], axis=1)
+
+y = df['class']
+
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X, y,test_size=0.33,random_state=42)
+
+X_train.shape, X_test.shape
+
+# Encode Categorical
+# !pip install category_encoders
+import category_encoders as ce
+encoder = ce.OrdinalEncoder(cols=['buying', 'meant', 'doors', 'persons', 'lug_boot', 'safety'])
+
+# label_encoder = LabelEncoder()
+# data_encoded = label_encoder.fit_transform(X_train)
+
+
+X_train = encoder.fit_transform(X_train)
+X_test = encoder.transform(X_test)
+
+from sklearn.tree import DecisionTreeClassifier
+
+clf_gini = DecisionTreeClassifier(criterion='gini', max_depth=3, random_state=0)
+clf_gini.fit(X_train, y_train)
+
+y_pred_gini = clf_gini.predict(X_test)
+y_pred_gini[:5]
+
+# Check Accuracy score
+from sklearn.metrics import accuracy_score
+
+print("Model Accuracy score with criterion gini index {0:0.4f}"
+      .format(accuracy_score(y_pred_gini, y_test)))
+
+y_pred_train_gini = clf_gini.predict(X_train)
+y_pred_train_gini
+
+print("Model Accuracy score with criterion gini index {0:0.4f}"
+      .format(accuracy_score(y_pred_train_gini, y_train)))
+
+print("Model Accuracy score with criterion gini index for test dataset {0:0.4f}"
+      .format(accuracy_score(y_pred_gini, y_test)))
+print("Model Accuracy score with criterion gini index for train dataset {0:0.4f}"
+      .format(accuracy_score(y_pred_train_gini, y_train)))
+
+plt.figure(figsize=(10, 8))
+from sklearn import tree
+tree.plot_tree(clf_gini.fit(X_train, y_train))
+
+
+import graphviz
+dot_data = tree.export_graphviz(clf_gini, out_file=None,
+                              feature_names=X_train.columns,
+                              class_names=y_train,
+                              filled=True, rounded=True,
+                              special_characters=True)
+
+graph = graphviz.Source(dot_data)
+
+graph
+
+## 8 ENSEMBLE LEARNING
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import StackingRegressor, RandomForestRegressor
+from sklearn.linear_model import Lasso, Ridge
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.svm import SVR
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.metrics import mean_squared_error
+import xgboost as xgb
+import matplotlib.pyplot as plt
+
+# Load the dataset
+df = pd.read_csv('advertising.csv')
+
+# Fill missing values with mean
+df.fillna(df.mean(), inplace=True)
+
+# Split into features and target variable
+X = df.drop(columns=['Sales'])
+y = df['Sales']
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Stacking
+base_models = [('lasso', Lasso()), ('ridge', Ridge()), ('knn', KNeighborsRegressor()), ('svr', SVR()), ('dt', DecisionTreeRegressor())]
+meta_model = Ridge()
+stacking_regressor = StackingRegressor(estimators=base_models, final_estimator=meta_model)
+stacking_regressor.fit(X_train, y_train)
+y_train_pred_stack = stacking_regressor.predict(X_train)
+y_test_pred_stack = stacking_regressor.predict(X_test)
+
+# Bagging - Random Forest
+random_forest_regressor = RandomForestRegressor(n_estimators=10, random_state=42)
+random_forest_regressor.fit(X_train, y_train)
+y_train_pred_rf = random_forest_regressor.predict(X_train)
+y_test_pred_rf = random_forest_regressor.predict(X_test)
+
+# Boosting - XGBoost
+xgb_regressor = xgb.XGBRegressor(n_estimators=10, random_state=42)
+xgb_regressor.fit(X_train, y_train)
+y_train_pred_xgb = xgb_regressor.predict(X_train)
+y_test_pred_xgb = xgb_regressor.predict(X_test)
+
+# Evaluation Metrics - RMSE for train and test sets
+rmse_stacking_train = np.sqrt(mean_squared_error(y_train, y_train_pred_stack))
+rmse_stacking_test = np.sqrt(mean_squared_error(y_test, y_test_pred_stack))
+
+rmse_rf_train = np.sqrt(mean_squared_error(y_train, y_train_pred_rf))
+rmse_rf_test = np.sqrt(mean_squared_error(y_test, y_test_pred_rf))
+
+rmse_boosting_train = np.sqrt(mean_squared_error(y_train, y_train_pred_xgb))
+rmse_boosting_test = np.sqrt(mean_squared_error(y_test, y_test_pred_xgb))
+
+# Create bar plots to compare RMSE of different ensemble methods on both training and test sets
+labels = ['Stacking', 'Random Forest', 'XGBoost']
+rmse_train = [rmse_stacking_train, rmse_rf_train, rmse_boosting_train]
+rmse_test = [rmse_stacking_test, rmse_rf_test, rmse_boosting_test]
+
+x = np.arange(len(labels))
+width = 0.35
+
+fig, ax = plt.subplots()
+rects1 = ax.bar(x - width/2, rmse_train, width, label='Train')
+rects2 = ax.bar(x + width/2, rmse_test, width, label='Test')
+
+ax.set_ylabel('RMSE')
+ax.set_title('RMSE by Ensemble Methods')
+ax.set_xticks(x)
+ax.set_xticklabels(labels)
+ax.legend()
+
+plt.show()
+
+
+## 9 PCA
+
+# %%
+from sklearn.datasets import load_digits
+import pandas as pd
+dataset = load_digits()
+dataset.keys()
+
+
+# %%
+len(dataset.feature_names)
+
+# %%
+dataset.data.shape
+
+# %%
+dataset.data[0]
+#represents first data from 1797 and is in the form of 64 sized 1D array
+
+# %%
+dataset.data[0].reshape(8,8)
+
+# %%
+from matplotlib import pyplot as plt
+plt.gray()
+plt.matshow(dataset.data[0].reshape(8,8))
+
+# %%
+df = pd.DataFrame(dataset.data,columns=dataset.feature_names)
+df.head()
+
+# %%
+dataset.target
+
+# %%
+X =df
+y =dataset.target
+
+# %%
+from sklearn.preprocessing import StandardScaler
+
+scaler = StandardScaler()
+
+X_scaled = scaler.fit_transform(X)
+X_scaled
+
+# %%
+# first checking accuracy by using all the features
+from sklearn.model_selection import train_test_split
+
+X_train, X_test, y_train, y_test =train_test_split(X_scaled,y,test_size=0.2)
+
+# %%
+from sklearn.linear_model import LogisticRegression
+
+model = LogisticRegression(max_iter=1000)
+model.fit(X_train,y_train)
+model.score(X_test,y_test)
+
+# %%
+#now we use PCA to reduce the dimensions
+
+from sklearn.decomposition import PCA
+
+pca = PCA(0.95) #retain 95% variance, you can also explicitly mention number of components
+X_pca = pca.fit_transform(X_scaled)
+X_pca.shape #40 features only taken in consideration out of 64
+
+# %%
+X_train_pca, X_test_pca, y_train, y_test = train_test_split(X_pca, y, test_size=0.2, random_state=30)
+
+
+# %%
+from sklearn.linear_model import LogisticRegression
+
+model = LogisticRegression(max_iter=1000)
+model.fit(X_train_pca,y_train)
+model.score(X_test_pca,y_test)
+
+
+
